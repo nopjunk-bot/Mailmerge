@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Student {
+  id            String       @id @default(cuid())
+  studentNo     Int
+  studentId     String
+  prefix        String
+  firstName     String
+  lastName      String
+  className     String
+  payments      Payment[]
+  importBatchId String?
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([className])
+  @@index([importBatchId])
+}
+
+model Semester {
+  id       String    @id @default(cuid())
+  term     Int
+  year     Int
+  label    String    @unique
+  payments Payment[]
+
+  @@unique([term, year])
+}
+
+model Payment {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  semesterId String
+  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  amount     Float
+  createdAt  DateTime @default(now())
+
+  @@unique([studentId, semesterId])
+  @@index([semesterId])
+}
+
+model ImportBatch {
+  id        String    @id @default(cuid())
+  fileName  String
+  students  Student[]
+  count     Int
+  createdAt DateTime  @default(now())
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
